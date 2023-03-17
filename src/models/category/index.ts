@@ -1,5 +1,5 @@
-import { model, Schema, Types } from "mongoose";
-import { ICategory, ICategoryModel } from "./types";
+import { Model, model, Schema, Types } from "mongoose";
+import { ICategory, ICategoryModel, IIncome } from "./types";
 import User from "@/models/user/index";
 
 const categorySchema = new Schema<ICategory, ICategoryModel>({
@@ -13,6 +13,20 @@ const categorySchema = new Schema<ICategory, ICategoryModel>({
     type: Types.ObjectId,
     ref: "User",
   },
+
+  incomes: [
+    {
+      description: {
+        type: String,
+        required: true,
+      },
+
+      total: {
+        type: Number,
+        required: true,
+      },
+    },
+  ],
 });
 
 categorySchema.static(
@@ -51,6 +65,37 @@ categorySchema.static(
         throw new Error("Category with given id not found!");
 
       return renamedCategory;
+    } catch (err: any) {
+      throw new Error(err);
+    }
+  }
+);
+
+categorySchema.static(
+  "addIncomes",
+  async function addIncomes(categoryNames: string[] | string, income: IIncome) {
+    try {
+      let categories;
+
+      if (Array.isArray(categoryNames)) {
+        categories = await this.updateMany(
+          { name: { $in: categoryNames } },
+          { $push: { incomes: income } }
+        );
+
+        if (!categories.modifiedCount)
+          throw new Error("There isn't any category with given names!");
+      } else {
+        categories = await this.findOneAndUpdate(
+          { name: categoryNames },
+          { $push: { incomes: income } }
+        );
+      }
+
+      if (!categories)
+        throw new Error("Couldn't found any category with this name!");
+
+      return categories;
     } catch (err: any) {
       throw new Error(err);
     }

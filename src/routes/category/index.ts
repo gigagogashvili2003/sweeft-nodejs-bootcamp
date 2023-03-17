@@ -1,4 +1,8 @@
-import { createCategory, renameCategory } from "@/controllers/category";
+import {
+  addIncomes,
+  createCategory,
+  renameCategory,
+} from "@/controllers/category";
 import { verifyJwt } from "@/middleware/verifyJwt";
 import { Router } from "express";
 import { body, param } from "express-validator";
@@ -33,5 +37,7 @@ router.put(
   param("categoryId").notEmpty().withMessage("Category id is missing!"),
   renameCategory
 );
+
+router.put("/add-incomes/:categoryNames", verifyJwt, addIncomes);
 
 export default router;
