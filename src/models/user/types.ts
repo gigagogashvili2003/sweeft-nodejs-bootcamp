@@ -5,6 +5,7 @@ export interface IUser extends Document {
   password: string;
   resetPasswordToken: string | null;
   _id: Types.ObjectId;
+  categories: Types.ObjectId[];
 }
 
 export interface IUserModel extends Model<IUser> {

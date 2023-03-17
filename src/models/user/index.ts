@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 import { IUser, IUserModel } from "./types";
 import { comparePasswords, hashPassword } from "@/utils/user-utils";
 
@@ -19,6 +19,8 @@ export const UserSchema = new Schema<IUser, IUserModel>({
     type: String,
     unique: true,
   },
+
+  categories: [{ type: Types.ObjectId, ref: "Category" }],
 });
 
 // Static Methods

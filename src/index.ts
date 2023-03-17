@@ -2,10 +2,11 @@ import "module-alias/register";
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import bodyParser from "body-parser";
 
 // Routes
 import UserRoutes from "./routes/user";
-import bodyParser from "body-parser";
+import CategoryRoutes from "./routes/category";
 
 dotenv.config();
 
@@ -15,7 +16,8 @@ const DB_URL = process.env.DB_URL as string;
 
 app.use(bodyParser.json());
 
-app.use("/api", UserRoutes);
+app.use("/api/auth", UserRoutes);
+app.use("/api/category", CategoryRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("Express + TypeScript Server");
