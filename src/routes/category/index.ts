@@ -1,5 +1,6 @@
 import {
   addIncomes,
+  addOutcomes,
   createCategory,
   renameCategory,
 } from "@/controllers/category";
@@ -38,6 +39,33 @@ router.put(
   renameCategory
 );
 
-router.put("/add-incomes/:categoryNames", verifyJwt, addIncomes);
+router.put(
+  "/add-incomes",
+  body("categoryNames")
+    .isArray()
+    .isLength({ min: 1 })
+    .withMessage("Categorynames array is empty!")
+    .custom((val) => {
+      if (!Array.isArray(val))
+        throw new Error("Categorynames have to be an array!");
+
+      if (!val.length) throw new Error("Categorynames Array is empty!");
+
+      const isEveryElString = val.every((el) => typeof el === "string");
+
+      if (!isEveryElString) {
+        throw new Error(
+          "Categorynames array should only icnlude strings in it!"
+        );
+      }
+
+      return true;
+    }),
+  body("income").isObject(),
+  verifyJwt,
+  addIncomes
+);
+
+router.put("/add-outcomes", verifyJwt, addOutcomes);
 
 export default router;

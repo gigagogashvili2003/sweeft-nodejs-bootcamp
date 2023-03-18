@@ -1,6 +1,6 @@
 import { Model, Types } from "mongoose";
 
-export type IOutcomeStatus = "Processing" | "Completed";
+export type IOutcomeStatus = "Processing" | "Completed" | "Rejected";
 
 export interface IIncome {
   description: string;
@@ -19,6 +19,14 @@ export interface ICategory extends Document {
   outcomes: IOutcome[];
 }
 
+export interface IUpdateManyResponse {
+  acknowledged: boolean;
+  insertedId?: null | Types.ObjectId;
+  matchedCount: number;
+  modifiedCount: number;
+  upsertedCount: number;
+}
+
 export interface ICategoryModel extends Model<ICategory> {
   createCategory(
     categoryName: string,
@@ -26,8 +34,6 @@ export interface ICategoryModel extends Model<ICategory> {
   ): Promise<ICategory>;
 
   renameCategory(categoryId: string, categoryName: string): Promise<ICategory>;
-  addIncomes(
-    categoryNames: string[] | string,
-    income: IIncome
-  ): Promise<ICategory>;
+  addIncomes(categoryNames: string[], income: IIncome): Promise<ICategory>;
+  addOutcomes(categoryNames: string[], outcome: IOutcome): Promise<ICategory>;
 }

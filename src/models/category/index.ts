@@ -1,33 +1,64 @@
-import { Model, model, Schema, Types } from "mongoose";
-import { ICategory, ICategoryModel, IIncome } from "./types";
+import { Model, model, Query, Schema, Types } from "mongoose";
+import {
+  ICategory,
+  ICategoryModel,
+  IIncome,
+  IOutcome,
+  IUpdateManyResponse,
+} from "./types";
 import User from "@/models/user/index";
 
-const categorySchema = new Schema<ICategory, ICategoryModel>({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-
-  userId: {
-    type: Types.ObjectId,
-    ref: "User",
-  },
-
-  incomes: [
-    {
-      description: {
-        type: String,
-        required: true,
-      },
-
-      total: {
-        type: Number,
-        required: true,
-      },
+const categorySchema = new Schema<ICategory, ICategoryModel>(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
     },
-  ],
-});
+
+    userId: {
+      type: Types.ObjectId,
+      ref: "User",
+    },
+
+    incomes: [
+      {
+        description: {
+          type: String,
+          required: true,
+        },
+
+        total: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+
+    outcomes: [
+      {
+        description: {
+          type: String,
+          required: true,
+        },
+
+        total: {
+          type: Number,
+          required: true,
+        },
+
+        status: {
+          type: String,
+          enum: ["Processing", "Completed", "Rejected"],
+          required: true,
+        },
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+// add, remove, rename, addincomes,addoutcomes logic.
 
 categorySchema.static(
   "createCategory",
@@ -73,33 +104,42 @@ categorySchema.static(
 
 categorySchema.static(
   "addIncomes",
-  async function addIncomes(categoryNames: string[] | string, income: IIncome) {
+  async function addIncomes(categoryNames: string[], income: IIncome) {
     try {
-      let categories;
+      const updatedCategories: IUpdateManyResponse = await this.updateMany(
+        { name: { $in: categoryNames } },
+        { $push: { incomes: income } }
+      );
 
-      if (Array.isArray(categoryNames)) {
-        categories = await this.updateMany(
-          { name: { $in: categoryNames } },
-          { $push: { incomes: income } }
-        );
+      if (!updatedCategories.modifiedCount)
+        throw new Error("There isn't any category with given names!");
 
-        if (!categories.modifiedCount)
-          throw new Error("There isn't any category with given names!");
-      } else {
-        categories = await this.findOneAndUpdate(
-          { name: categoryNames },
-          { $push: { incomes: income } }
-        );
-      }
-
-      if (!categories)
-        throw new Error("Couldn't found any category with this name!");
-
-      return categories;
+      return updatedCategories;
     } catch (err: any) {
       throw new Error(err);
     }
   }
 );
+
+categorySchema.static(
+  "addOutcomes",
+  async function addOutcomes(categoryNames: string[], outcome: IOutcome) {
+    try {
+      const updatedCategories: IUpdateManyResponse = await this.updateMany(
+        { name: { $in: categoryNames } },
+        { $push: { outcomes: outcome } }
+      );
+
+      if (!updatedCategories.modifiedCount)
+        throw new Error("There isn't any category with given names!");
+
+      return updatedCategories;
+    } catch (err: any) {
+      throw new Error(err);
+    }
+  }
+);
+
+// filters,sorts
 
 export default model<ICategory, ICategoryModel>("Category", categorySchema);

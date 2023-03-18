@@ -3,7 +3,7 @@ import { Response } from "express";
 import { validationResult } from "express-validator";
 import Category from "@/models/category/index";
 import { JwtPayload } from "jsonwebtoken";
-import { IIncome } from "@/models/category/types";
+import { IIncome, IOutcome } from "@/models/category/types";
 
 export const createCategory = async (req: IRequest, res: Response) => {
   const { categoryName } = req.body;
@@ -49,25 +49,17 @@ export const renameCategory = async (req: IRequest, res: Response) => {
   }
 };
 
-// Could've be done with req.body, where i could take array of category names, but i preffered this way.
 export const addIncomes = async (req: IRequest, res: Response) => {
-  const categoryNames: string = req.params.categoryNames;
+  const categoryNames: string[] = req.body.categoryNames;
   const income: IIncome = req.body.income;
 
-  const splittedCategoryNames = categoryNames.split(",");
-  let resultCategoryNames: string[] | string;
-
-  if (splittedCategoryNames.length === 1) {
-    resultCategoryNames = splittedCategoryNames[0];
-  } else {
-    resultCategoryNames = splittedCategoryNames;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
   try {
-    const updatedCategories = await Category.addIncomes(
-      resultCategoryNames,
-      income
-    );
+    const updatedCategories = await Category.addIncomes(categoryNames, income);
 
     res
       .status(200)
@@ -77,4 +69,25 @@ export const addIncomes = async (req: IRequest, res: Response) => {
   }
 };
 
-export const addOutcomes = async (req: IRequest, res: Response) => {};
+export const addOutcomes = async (req: IRequest, res: Response) => {
+  const categoryNames: string[] = req.body.categoryNames;
+  const outcome: IOutcome = req.body.outcome;
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const updatedCategories = await Category.addOutcomes(
+      categoryNames,
+      outcome
+    );
+
+    res
+      .status(200)
+      .json({ message: "Outcome added to categories!", updatedCategories });
+  } catch (err: any) {
+    res.status(400).json({ errorMessage: err.message });
+  }
+};
