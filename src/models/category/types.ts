@@ -27,6 +27,19 @@ export interface IUpdateManyResponse {
   upsertedCount: number;
 }
 
+interface TimeStamps {
+  startDate?: string | number;
+  endDate?: string | number;
+}
+
+export interface IOutcomesQueryParams extends TimeStamps {
+  status?: IOutcomeStatus;
+  total?: number;
+}
+
+export interface ICategoriesQueryParams extends TimeStamps {
+  categoryName?: string;
+}
 export interface ICategoryModel extends Model<ICategory> {
   createCategory(
     categoryName: string,
@@ -36,4 +49,6 @@ export interface ICategoryModel extends Model<ICategory> {
   renameCategory(categoryId: string, categoryName: string): Promise<ICategory>;
   addIncomes(categoryNames: string[], income: IIncome): Promise<ICategory>;
   addOutcomes(categoryNames: string[], outcome: IOutcome): Promise<ICategory>;
+  getOutcomes(queryParams: IOutcomesQueryParams): Promise<ICategory>;
+  getCategories(queryParams: ICategoriesQueryParams): Promise<ICategory>;
 }

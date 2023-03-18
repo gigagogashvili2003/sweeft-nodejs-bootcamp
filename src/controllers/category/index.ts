@@ -1,9 +1,13 @@
 import { IRequest } from "@/middleware/verifyJwt";
-import { Response } from "express";
+import { query, Response } from "express";
 import { validationResult } from "express-validator";
 import Category from "@/models/category/index";
 import { JwtPayload } from "jsonwebtoken";
-import { IIncome, IOutcome } from "@/models/category/types";
+import {
+  ICategoriesQueryParams,
+  IIncome,
+  IOutcome,
+} from "@/models/category/types";
 
 export const createCategory = async (req: IRequest, res: Response) => {
   const { categoryName } = req.body;
@@ -87,6 +91,33 @@ export const addOutcomes = async (req: IRequest, res: Response) => {
     res
       .status(200)
       .json({ message: "Outcome added to categories!", updatedCategories });
+  } catch (err: any) {
+    res.status(400).json({ errorMessage: err.message });
+  }
+};
+
+export const getCategories = async (req: IRequest, res: Response) => {
+  const queryParams: ICategoriesQueryParams = req.query;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const filteredCategories = await Category.getCategories(queryParams);
+
+    res
+      .status(200)
+      .json({ message: "Filtered succesfully", filteredCategories });
+  } catch (err: any) {
+    res.status(400).json({ errorMessage: err.message });
+  }
+};
+
+export const getOutcomes = async (req: IRequest, res: Response) => {
+  const queryParams = req.query;
+
+  try {
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }

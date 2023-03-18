@@ -1,9 +1,11 @@
 import { Model, model, Query, Schema, Types } from "mongoose";
 import {
+  ICategoriesQueryParams,
   ICategory,
   ICategoryModel,
   IIncome,
   IOutcome,
+  IOutcomesQueryParams,
   IUpdateManyResponse,
 } from "./types";
 import User from "@/models/user/index";
@@ -141,5 +143,58 @@ categorySchema.static(
 );
 
 // filters,sorts
+
+categorySchema.static(
+  "getCategories",
+  async function getCategories(params: ICategoriesQueryParams) {
+    try {
+      const { categoryName, startDate, endDate } = params;
+
+      const filterOptions: Record<string, any> = {};
+
+      if (
+        categoryName &&
+        categoryName !== "null" &&
+        categoryName !== "undefined"
+      ) {
+        filterOptions.name = categoryName;
+      }
+
+      if (startDate && startDate !== "null" && startDate !== "undefined") {
+        filterOptions.createdAt = { $gte: startDate };
+      }
+
+      if (endDate && endDate !== "null" && endDate !== "undefined") {
+        if (!startDate || startDate === "null" || startDate === "undefined")
+          filterOptions.createdAt = {};
+        filterOptions.createdAt.$lte = new Date(endDate as string | number);
+      }
+
+      const filteredCategories: any = await this.find(filterOptions);
+
+      return filteredCategories;
+    } catch (err) {}
+  }
+);
+
+categorySchema.static(
+  "getOutcomes",
+  async function getOutcomes(params: IOutcomesQueryParams) {
+    try {
+      const { startDate, endDate, status, total } = params;
+      const filterOptions: any = {};
+
+      if (startDate) {
+        filterOptions.createdAt = { $gte: new Date(startDate) };
+      }
+
+      const filteredOutcomes: any = await this.find(filterOptions);
+
+      return filteredOutcomes;
+    } catch (err: any) {
+      throw new Error(err);
+    }
+  }
+);
 
 export default model<ICategory, ICategoryModel>("Category", categorySchema);

@@ -3,10 +3,12 @@ import {
   addOutcomes,
   createCategory,
   renameCategory,
+  getOutcomes,
+  getCategories,
 } from "@/controllers/category";
 import { verifyJwt } from "@/middleware/verifyJwt";
 import { Router } from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 
 const router = Router();
 
@@ -66,6 +68,34 @@ router.put(
   addIncomes
 );
 
-router.put("/add-outcomes", verifyJwt, addOutcomes);
+router.put(
+  "/add-outcomes",
+  verifyJwt,
+  body("categoryNames")
+    .isArray()
+    .isLength({ min: 1 })
+    .withMessage("Categorynames array is empty!")
+    .custom((val) => {
+      if (!Array.isArray(val))
+        throw new Error("Categorynames have to be an array!");
+
+      if (!val.length) throw new Error("Categorynames Array is empty!");
+
+      const isEveryElString = val.every((el) => typeof el === "string");
+
+      if (!isEveryElString) {
+        throw new Error(
+          "Categorynames array should only icnlude strings in it!"
+        );
+      }
+
+      return true;
+    }),
+  body("outcome").isObject(),
+  addOutcomes
+);
+
+router.get("/get-outcomes", verifyJwt, query(""), getOutcomes);
+router.get("/get-categories", verifyJwt, getCategories);
 
 export default router;
