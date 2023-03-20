@@ -1,3 +1,4 @@
+import { IUser } from "@/models/user/types";
 import bcrypt from "bcrypt";
 export const hashPassword = async (password: string, saltValue = 10) => {
   try {
@@ -18,4 +19,12 @@ export const comparePasswords = async (
   } catch (err: any) {
     throw new Error(err);
   }
+};
+
+export const userWithoutSensitiveData = (user: IUser) => {
+  const userObjectData = user.toObject();
+  delete userObjectData.password;
+  delete userObjectData.resetPasswordToken;
+
+  return userObjectData;
 };

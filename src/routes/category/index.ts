@@ -6,15 +6,18 @@ import {
   getOutcomes,
   getCategories,
 } from "@/controllers/category";
+import { validateData } from "@/middleware/validatons";
 import { verifyJwt } from "@/middleware/verifyJwt";
+import { arrayOfStringsValidation } from "@/utils/category-utils";
 import { Router } from "express";
-import { body, param, query } from "express-validator";
+import { body, param } from "express-validator";
 
 const router = Router();
 
+router.use(verifyJwt);
+
 router.post(
   "/new-category",
-  verifyJwt,
   //   Validations
   body("categoryName")
     .trim()
@@ -23,12 +26,12 @@ router.post(
     .withMessage(
       "Category name must be a string, with min 3, max 20 characters!"
     ),
+  validateData,
   createCategory
 );
 
 router.put(
   "/rename-category/:categoryId",
-  verifyJwt,
   // Validations
   body("categoryName")
     .trim()
@@ -38,6 +41,7 @@ router.put(
       "Category name must be a string, with min 3, max 20 characters!"
     ),
   param("categoryId").notEmpty().withMessage("Category id is missing!"),
+  validateData,
   renameCategory
 );
 
@@ -64,38 +68,23 @@ router.put(
       return true;
     }),
   body("income").isObject(),
-  verifyJwt,
+  validateData,
   addIncomes
 );
 
 router.put(
   "/add-outcomes",
-  verifyJwt,
   body("categoryNames")
     .isArray()
     .isLength({ min: 1 })
     .withMessage("Categorynames array is empty!")
-    .custom((val) => {
-      if (!Array.isArray(val))
-        throw new Error("Categorynames have to be an array!");
-
-      if (!val.length) throw new Error("Categorynames Array is empty!");
-
-      const isEveryElString = val.every((el) => typeof el === "string");
-
-      if (!isEveryElString) {
-        throw new Error(
-          "Categorynames array should only icnlude strings in it!"
-        );
-      }
-
-      return true;
-    }),
+    .custom(arrayOfStringsValidation),
   body("outcome").isObject(),
+  validateData,
   addOutcomes
 );
 
-router.get("/get-outcomes", verifyJwt, query(""), getOutcomes);
-router.get("/get-categories", verifyJwt, getCategories);
+router.get("/get-outcomes", getOutcomes);
+router.get("/get-categories", getCategories);
 
 export default router;

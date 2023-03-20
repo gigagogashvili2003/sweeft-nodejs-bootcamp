@@ -22,7 +22,7 @@
     "express-validator": "^6.15.0",
     "jsonwebtoken": "^9.0.0",
     "module-alias": "^2.2.2",
-    "mongoose": "^7.0.1"
+    "mongoose": "^7.0.2"
   },
   "_moduleAliases": {
     "@": "dist"

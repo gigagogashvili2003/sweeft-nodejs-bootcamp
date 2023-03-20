@@ -1,42 +1,35 @@
 import { signJWT } from "@/utils/jwt";
 import { Request, Response } from "express";
-import { validationResult } from "express-validator/src/validation-result";
+
 import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "@/models/user";
+import { IRequest } from "@/middleware/verifyJwt";
 
 export const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
   try {
-    const user = await User.signup(email, password);
-    const token = signJWT({ email: user.email, _id: user._id });
+    await User.signup(email, password);
 
-    res.status(200).json({ message: "Account created succesfully!", token });
+    res.status(200).json({
+      message: "Account created succesfully, please sign in to the account!",
+    });
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
   try {
+    const { email, password } = req.body;
+
     const user = await User.login(email, password);
     const token = signJWT({ email: user.email, _id: user._id });
 
-    res
-      .status(200)
-      .json({ message: "You have logged in succesfully", user, token });
+    res.status(200).json({
+      message: "You have logged in succesfully",
+      userInfo: user,
+      token,
+    });
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }
@@ -46,18 +39,15 @@ export const resetPasswordInstructions = async (
   req: Request,
   res: Response
 ) => {
-  const { email, password } = req.body;
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  const { email } = req.body;
 
   try {
-    const user = await User.resetPasswordInstructions(email, password);
+    const user = await User.resetPasswordInstructions(email);
     const token = signJWT({ email: user.email, _id: user._id });
 
     await User.findOneAndUpdate({ email }, { resetPasswordToken: token });
+
+    // Send mail
 
     res
       .status(200)

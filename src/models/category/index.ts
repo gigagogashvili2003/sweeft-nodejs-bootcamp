@@ -54,6 +54,11 @@ const categorySchema = new Schema<ICategory, ICategoryModel>(
           enum: ["Processing", "Completed", "Rejected"],
           required: true,
         },
+
+        createdAt: {
+          type: Date,
+          required: true,
+        },
       },
     ],
   },
@@ -71,12 +76,12 @@ categorySchema.static(
         userId,
       });
 
-      await User.findOneAndUpdate(
+      const user = await User.findOneAndUpdate(
         { _id: userId },
         { $push: { categories: newCategory._id } }
       );
 
-      return newCategory;
+      if (!user) throw new Error("User not found!");
     } catch (err: any) {
       throw new Error(err);
     }
@@ -96,8 +101,6 @@ categorySchema.static(
 
       if (!renamedCategory)
         throw new Error("Category with given id not found!");
-
-      return renamedCategory;
     } catch (err: any) {
       throw new Error(err);
     }
@@ -115,8 +118,6 @@ categorySchema.static(
 
       if (!updatedCategories.modifiedCount)
         throw new Error("There isn't any category with given names!");
-
-      return updatedCategories;
     } catch (err: any) {
       throw new Error(err);
     }
@@ -125,17 +126,21 @@ categorySchema.static(
 
 categorySchema.static(
   "addOutcomes",
-  async function addOutcomes(categoryNames: string[], outcome: IOutcome) {
+  async function addOutcomes(
+    categoryNames: string[],
+    outcome: IOutcome,
+    userId: Types.ObjectId
+  ) {
     try {
       const updatedCategories: IUpdateManyResponse = await this.updateMany(
-        { name: { $in: categoryNames } },
+        { userId, name: { $in: categoryNames } },
         { $push: { outcomes: outcome } }
       );
 
+      console.log(updatedCategories);
+
       if (!updatedCategories.modifiedCount)
         throw new Error("There isn't any category with given names!");
-
-      return updatedCategories;
     } catch (err: any) {
       throw new Error(err);
     }
@@ -146,49 +151,94 @@ categorySchema.static(
 
 categorySchema.static(
   "getCategories",
-  async function getCategories(params: ICategoriesQueryParams) {
+  async function getCategories(
+    params: ICategoriesQueryParams,
+    userId: Types.ObjectId
+  ) {
     try {
-      const { categoryName, startDate, endDate } = params;
+      const { categoryName, startDate, endDate, sortDirection, sortProperty } =
+        params;
 
       const filterOptions: Record<string, any> = {};
+      let sortOptions: Record<string, any> = {};
 
-      if (
-        categoryName &&
-        categoryName !== "null" &&
-        categoryName !== "undefined"
-      ) {
+      if (sortProperty && sortDirection) {
+        sortOptions[sortProperty] = sortDirection;
+      }
+
+      if (userId) filterOptions.userId = userId;
+
+      if (categoryName) {
         filterOptions.name = categoryName;
       }
 
-      if (startDate && startDate !== "null" && startDate !== "undefined") {
+      if (startDate) {
         filterOptions.createdAt = { $gte: startDate };
       }
 
-      if (endDate && endDate !== "null" && endDate !== "undefined") {
-        if (!startDate || startDate === "null" || startDate === "undefined")
-          filterOptions.createdAt = {};
+      if (endDate) {
+        if (!startDate) filterOptions.createdAt = {};
         filterOptions.createdAt.$lte = new Date(endDate as string | number);
       }
 
-      const filteredCategories: any = await this.find(filterOptions);
+      const filteredCategories: any = await this.find(filterOptions).sort(
+        sortOptions
+      );
 
       return filteredCategories;
-    } catch (err) {}
+    } catch (err: any) {
+      throw new Error(err);
+    }
   }
 );
 
 categorySchema.static(
   "getOutcomes",
-  async function getOutcomes(params: IOutcomesQueryParams) {
+  async function getOutcomes(
+    params: IOutcomesQueryParams,
+    userId: Types.ObjectId
+  ) {
     try {
-      const { startDate, endDate, status, total } = params;
-      const filterOptions: any = {};
+      const { startDate, endDate, status, total, sortProperty, sortDirection } =
+        params;
+      const filterOptions: Record<string, any> = {};
+      let sortOptions: Record<string, any> = {};
 
-      if (startDate) {
-        filterOptions.createdAt = { $gte: new Date(startDate) };
+      if (userId) filterOptions.userId = userId;
+
+      if (sortProperty && sortDirection) {
+        sortOptions[`outcomes.${sortProperty}`] = sortDirection;
       }
 
-      const filteredOutcomes: any = await this.find(filterOptions);
+      if (status) {
+        filterOptions["outcomes.status"] = status;
+      }
+
+      if (total) filterOptions["outcomes.total"] = total;
+
+      if (startDate) {
+        filterOptions["outcomes.createdAt"] = {
+          $gte: new Date(startDate as string | number),
+        };
+      }
+
+      if (endDate) {
+        filterOptions["outcomes.createdAt"] = {
+          $lte: new Date(endDate as string | number),
+        };
+      }
+
+      const filteredOutcomes: any = await this.find(filterOptions)
+        .sort(sortOptions)
+        .select("outcomes");
+
+      // const outcomes = filteredOutcomes.reduce((acc: any, outcome: any) => {
+      //   const filtered = outcome.outcomes.filter(
+      //     (item: any) => status && item.satus === "Completed"
+      //   );
+
+      //   return [...acc, ...filtered];
+      // }, []);
 
       return filteredOutcomes;
     } catch (err: any) {

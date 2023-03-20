@@ -1,27 +1,33 @@
 import { model, Schema, Types } from "mongoose";
 import { IUser, IUserModel } from "./types";
-import { comparePasswords, hashPassword } from "@/utils/user-utils";
+import {
+  comparePasswords,
+  hashPassword,
+  userWithoutSensitiveData,
+} from "@/utils/user-utils";
 
-export const UserSchema = new Schema<IUser, IUserModel>({
-  email: {
-    required: true,
-    unique: true,
-    type: String,
+export const UserSchema = new Schema<IUser, IUserModel>(
+  {
+    email: {
+      required: true,
+      unique: true,
+      type: String,
+    },
+
+    password: {
+      required: true,
+      type: String,
+    },
+
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    categories: [{ type: Types.ObjectId, ref: "Category" }],
   },
-
-  password: {
-    required: true,
-    type: String,
-  },
-
-  resetPasswordToken: {
-    default: null,
-    type: String,
-    unique: true,
-  },
-
-  categories: [{ type: Types.ObjectId, ref: "Category" }],
-});
+  { timestamps: true }
+);
 
 // Static Methods
 UserSchema.static(
@@ -33,12 +39,10 @@ UserSchema.static(
 
       const encryptedPassword = await hashPassword(password, 10);
 
-      const user: IUser | null = await this.create({
+      await this.create({
         email,
         password: encryptedPassword,
       });
-
-      return user;
     } catch (err: any) {
       throw new Error(err);
     }
@@ -49,7 +53,9 @@ UserSchema.static(
   "login",
   async function login(email: string, password: string) {
     try {
-      const user: IUser | null = await this.findOne({ email });
+      const user: IUser | null = await this.findOne({
+        email,
+      });
 
       if (!user) throw new Error("User with this email doesn't exists!");
 
@@ -57,7 +63,9 @@ UserSchema.static(
 
       if (!passwordsMatch) throw new Error("Invalid Passwrod!");
 
-      return user;
+      const userInfo = userWithoutSensitiveData(user);
+
+      return userInfo;
     } catch (err: any) {
       throw new Error(err);
     }
@@ -66,17 +74,15 @@ UserSchema.static(
 
 UserSchema.static(
   "resetPasswordInstructions",
-  async function resetPasswordInstructions(email: string, password: string) {
+  async function resetPasswordInstructions(email: string) {
     try {
       const user: IUser | null = await this.findOne({ email });
 
       if (!user) throw new Error("User with this email doesn't exists!");
 
-      const passwordsMatch = await comparePasswords(password, user.password);
+      const userInfo = userWithoutSensitiveData(user);
 
-      if (!passwordsMatch) throw new Error("Invalid Passwrod!");
-
-      return user;
+      return userInfo;
     } catch (err: any) {
       throw new Error(err);
     }

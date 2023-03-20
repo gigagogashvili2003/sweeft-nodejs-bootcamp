@@ -4,6 +4,8 @@ import {
   resetPasswordInstructions,
   signup,
 } from "@/controllers/user";
+import { validateData } from "@/middleware/validatons";
+import { verifyJwt } from "@/middleware/verifyJwt";
 import { Router } from "express";
 import { body, param } from "express-validator";
 
@@ -20,6 +22,7 @@ router.post(
     .trim()
     .isStrongPassword()
     .withMessage("Password isn't strong enough!"),
+  validateData,
   signup
 );
 
@@ -28,25 +31,27 @@ router.post(
   //   Validations
   body("email").notEmpty().withMessage("Email address missing!"),
   body("password").notEmpty().withMessage("Password missing!"),
+  validateData,
   login
 );
 
 router.post(
   "/reset-password",
-  //   Validations
-  body("email").notEmpty().withMessage("Email address missing!"),
-  body("password").notEmpty().withMessage("Password missing!"),
+  verifyJwt,
+  validateData,
   resetPasswordInstructions
 );
 
 router.post(
   "/reset-password/:resetPasswordToken",
+  verifyJwt,
   // Validations,
   param("resetPasswordToken").notEmpty(),
   body("password")
     .trim()
     .isStrongPassword()
     .withMessage("Password isn't strong enough!"),
+  validateData,
   resetPassword
 );
 
