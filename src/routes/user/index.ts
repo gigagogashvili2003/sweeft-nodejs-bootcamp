@@ -35,12 +35,7 @@ router.post(
   login
 );
 
-router.post(
-  "/reset-password",
-  verifyJwt,
-  validateData,
-  resetPasswordInstructions
-);
+router.post("/reset-password", validateData, resetPasswordInstructions);
 
 router.post(
   "/reset-password/:resetPasswordToken",

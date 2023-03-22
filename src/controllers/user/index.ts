@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "@/models/user";
 import { IRequest } from "@/middleware/verifyJwt";
+import nodemailer from "nodemailer";
 
 export const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -48,6 +49,35 @@ export const resetPasswordInstructions = async (
     await User.findOneAndUpdate({ email }, { resetPasswordToken: token });
 
     // Send mail
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
+        clientId: process.env.OAUTH_CLIENTID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+        accessToken: process.env.OAUTH_ACCESS_TOKEN,
+      },
+    });
+
+    const mailOptions = {
+      from: "thegogashvili@gmail.com",
+      to: "thegogashvili@gmail.com",
+      subject: "Password reset!",
+      // text: "hello",
+      html: `<div>Hello How Are You</div>`,
+    };
+
+    transporter.sendMail(mailOptions, function (err, data) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Email sent");
+      }
+    });
 
     res
       .status(200)
