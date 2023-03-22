@@ -4,7 +4,8 @@ import { Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "@/models/user";
 import { IRequest } from "@/middleware/verifyJwt";
-import nodemailer from "nodemailer";
+import { transporter } from "@/index";
+import { sendLinkWithToken } from "@/utils/user-utils";
 
 export const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -44,60 +45,59 @@ export const resetPasswordInstructions = async (
 
   try {
     const user = await User.resetPasswordInstructions(email);
-    const token = signJWT({ email: user.email, _id: user._id });
+    const token = signJWT({ email: user.email, _id: user._id }, "5m");
 
     await User.findOneAndUpdate({ email }, { resetPasswordToken: token });
 
     // Send mail
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.MAIL_USERNAME,
-        pass: process.env.MAIL_PASSWORD,
-        clientId: process.env.OAUTH_CLIENTID,
-        clientSecret: process.env.OAUTH_CLIENT_SECRET,
-        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-        accessToken: process.env.OAUTH_ACCESS_TOKEN,
-      },
-    });
-
     const mailOptions = {
-      from: "thegogashvili@gmail.com",
-      to: "thegogashvili@gmail.com",
-      subject: "Password reset!",
-      // text: "hello",
-      html: `<div>Hello How Are You</div>`,
+      from: process.env.MAIL_USERNAME,
+      to: email,
+      subject: "Password reset instructions!",
+      html: sendLinkWithToken(token),
     };
 
-    transporter.sendMail(mailOptions, function (err, data) {
+    transporter.sendMail(mailOptions, function (err: any, data) {
       if (err) {
-        console.log(err);
+        throw new Error(err);
       } else {
-        console.log("Email sent");
+        res
+          .status(200)
+          .json({ message: "Password reset instructions has sent on email!" });
       }
     });
-
-    res
-      .status(200)
-      .json({ message: "Password reset instructions has sent on email!" });
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
-  const { resetPasswordToken } = req.params;
-  const { password } = req.body;
-
   try {
+    const { resetPasswordToken } = req.params;
+    const { password } = req.body;
+
     const decodedToken = jwt.verify(
       resetPasswordToken,
       process.env.JWT_SECRET_KEY as string
     ) as JwtPayload;
 
     await User.resetPassword(decodedToken.email, password);
+
+    const mailOptions = {
+      from: process.env.MAIL_USERNAME,
+      to: decodedToken.email,
+      subject: "Password reset",
+      text: "Password've been updated succesfully!",
+    };
+
+    transporter.sendMail(mailOptions, function (err: any, data) {
+      if (err) {
+        throw new Error(err);
+      } else {
+        res.status(200).json({ message: "Password Updated Succesfully!" });
+      }
+    });
 
     res.status(200).json({
       message:
