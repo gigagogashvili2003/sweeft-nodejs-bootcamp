@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 
 import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "@/models/user";
-import { IRequest } from "@/middleware/verifyJwt";
 import { transporter } from "@/index";
 import { sendLinkWithToken } from "@/utils/user-utils";
 
@@ -52,13 +51,13 @@ export const resetPasswordInstructions = async (
     // Send mail
 
     const mailOptions = {
-      from: process.env.MAIL_USERNAME,
-      to: email,
+      from: process.env.MAIL_USERNAME as string,
+      to: email as string,
       subject: "Password reset instructions!",
       html: sendLinkWithToken(token),
     };
 
-    transporter.sendMail(mailOptions, function (err: any, data) {
+    transporter.sendMail(mailOptions, function (err: any) {
       if (err) {
         throw new Error(err);
       } else {
@@ -85,8 +84,8 @@ export const resetPassword = async (req: Request, res: Response) => {
     await User.resetPassword(decodedToken.email, password);
 
     const mailOptions = {
-      from: process.env.MAIL_USERNAME,
-      to: decodedToken.email,
+      from: process.env.MAIL_USERNAME as string,
+      to: decodedToken.email as string,
       subject: "Password reset",
       text: "Password've been updated succesfully!",
     };

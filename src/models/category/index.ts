@@ -1,4 +1,4 @@
-import { Model, model, Query, Schema, Types } from "mongoose";
+import {  model, Schema, Types } from "mongoose";
 import {
   ICategoriesQueryParams,
   ICategory,
@@ -15,7 +15,6 @@ const categorySchema = new Schema<ICategory, ICategoryModel>(
     name: {
       type: String,
       required: true,
-      unique: true,
     },
 
     userId: {
@@ -64,6 +63,9 @@ const categorySchema = new Schema<ICategory, ICategoryModel>(
   },
   { timestamps: true }
 );
+
+// Every user should have default category when registers!
+categorySchema.index({ name: 1, userId: 1 }, { unique: true });
 
 // add, remove, rename, addincomes,addoutcomes logic.
 
@@ -130,12 +132,16 @@ categorySchema.static(
 
 categorySchema.static(
   "renameCategory",
-  async function (categoryId: Types.ObjectId, categoryName: string) {
+  async function (
+    categoryId: Types.ObjectId,
+    categoryName: string,
+    userId: Types.ObjectId
+  ) {
     try {
       const categoryObjectId = new Types.ObjectId(categoryId);
 
       const renamedCategory: ICategory | null = await this.findOneAndUpdate(
-        { _id: categoryObjectId },
+        { userId, _id: categoryObjectId },
         { name: categoryName }
       );
 
@@ -149,7 +155,11 @@ categorySchema.static(
 
 categorySchema.static(
   "addIncomes",
-  async function addIncomes(categoryNames: string[], income: IIncome) {
+  async function addIncomes(
+    categoryNames: string[],
+    income: IIncome,
+    userId: Types.ObjectId
+  ) {
     try {
       let customMessage: string = "";
 
@@ -160,7 +170,7 @@ categorySchema.static(
       }
 
       const updatedCategories: IUpdateManyResponse = await this.updateMany(
-        { name: { $in: categoryNames } },
+        { userId, name: { $in: categoryNames } },
         { $push: { incomes: income } }
       );
 
@@ -224,8 +234,6 @@ categorySchema.static(
         sortOptions[sortProperty] = sortDirection;
       }
 
-      if (userId) filterOptions.userId = userId;
-
       if (categoryName) {
         filterOptions.name = categoryName;
       }
@@ -235,13 +243,13 @@ categorySchema.static(
       }
 
       if (endDate) {
-        if (!startDate) filterOptions.createdAt = {};
-        filterOptions.createdAt.$lte = new Date(endDate as string | number);
+        filterOptions.createdAt.$lte = new Date(endDate);
       }
 
-      const filteredCategories: any = await this.find(filterOptions).sort(
-        sortOptions
-      );
+      const filteredCategories: any = await this.find({
+        userId,
+        ...filterOptions,
+      }).sort(sortOptions);
 
       return filteredCategories;
     } catch (err: any) {
@@ -262,8 +270,6 @@ categorySchema.static(
       const filterOptions: Record<string, any> = {};
       let sortOptions: Record<string, any> = {};
 
-      if (userId) filterOptions.userId = userId;
-
       if (sortProperty && sortDirection) {
         sortOptions[`outcomes.${sortProperty}`] = sortDirection;
       }
@@ -276,27 +282,22 @@ categorySchema.static(
 
       if (startDate) {
         filterOptions["outcomes.createdAt"] = {
-          $gte: new Date(startDate as string | number),
+          $gte: new Date(startDate),
         };
       }
 
       if (endDate) {
         filterOptions["outcomes.createdAt"] = {
-          $lte: new Date(endDate as string | number),
+          $lte: new Date(endDate),
         };
       }
 
-      const filteredOutcomes: any = await this.find(filterOptions)
+      const filteredOutcomes: any = await this.find({
+        userId,
+        ...filterOptions,
+      })
         .sort(sortOptions)
         .select("outcomes");
-
-      // const outcomes = filteredOutcomes.reduce((acc: any, outcome: any) => {
-      //   const filtered = outcome.outcomes.filter(
-      //     (item: any) => status && item.satus === "Completed"
-      //   );
-
-      //   return [...acc, ...filtered];
-      // }, []);
 
       return filteredOutcomes;
     } catch (err: any) {

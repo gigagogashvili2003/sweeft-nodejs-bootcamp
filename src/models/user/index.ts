@@ -1,13 +1,12 @@
 import { model, Schema, Types } from "mongoose";
 import { IUser, IUserModel } from "./types";
-import Cateogry from "@/routes/category/index";
+import Category from "@/models/category";
 
 import {
   comparePasswords,
   hashPassword,
   userWithoutSensitiveData,
 } from "@/utils/user-utils";
-import category from "../category";
 
 export const UserSchema = new Schema<IUser, IUserModel>(
   {
@@ -47,7 +46,7 @@ UserSchema.static(
         password: encryptedPassword,
       });
 
-      await category.createCategory("default", user._id);
+      await Category.createCategory("default", user._id);
     } catch (err: any) {
       throw new Error(err);
     }

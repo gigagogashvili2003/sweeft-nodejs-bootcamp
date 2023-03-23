@@ -1,8 +1,6 @@
 import { IRequest } from "@/middleware/verifyJwt";
-import { query, Response } from "express";
-import { validationResult } from "express-validator";
+import { Response } from "express";
 import Category from "@/models/category/index";
-import { JwtPayload } from "jsonwebtoken";
 import {
   ICategoriesQueryParams,
   IIncome,
@@ -46,8 +44,12 @@ export const renameCategory = async (req: IRequest, res: Response) => {
   try {
     const { categoryId } = req.params;
     const { categoryName } = req.body;
+    const user = req.user;
 
-    await Category.renameCategory(categoryId, categoryName);
+    if (!user)
+      return res.status(401).json({ errorMessage: "User not authenticated!" });
+
+    await Category.renameCategory(categoryId, categoryName, user._id);
 
     res.status(200).json({ message: "Category renamed succesfully!" });
   } catch (err: any) {

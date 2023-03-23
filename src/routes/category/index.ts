@@ -9,7 +9,6 @@ import {
 } from "@/controllers/category";
 import { validateData } from "@/middleware/validatons";
 import { verifyJwt } from "@/middleware/verifyJwt";
-import { arrayOfStringsValidation } from "@/utils/category-utils";
 import { Router } from "express";
 import { body, param } from "express-validator";
 
