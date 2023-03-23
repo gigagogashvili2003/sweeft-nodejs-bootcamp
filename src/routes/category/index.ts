@@ -5,6 +5,7 @@ import {
   renameCategory,
   getOutcomes,
   getCategories,
+  deleteCategory,
 } from "@/controllers/category";
 import { validateData } from "@/middleware/validatons";
 import { verifyJwt } from "@/middleware/verifyJwt";
@@ -30,6 +31,26 @@ router.post(
   createCategory
 );
 
+router.delete(
+  "/delete-category",
+  body("categoryName")
+    .trim()
+    .isString()
+    .isLength({ min: 3, max: 20 })
+    .withMessage(
+      "Category name must be a string, with min 3, max 20 characters!"
+    )
+    .custom((val) => {
+      if (val === "default") {
+        throw new Error("You cann't delete default category!");
+      }
+
+      return true;
+    }),
+  validateData,
+  deleteCategory
+);
+
 router.put(
   "/rename-category/:categoryId",
   // Validations
@@ -49,24 +70,9 @@ router.put(
   "/add-incomes",
   body("categoryNames")
     .isArray()
-    .isLength({ min: 1 })
-    .withMessage("Categorynames array is empty!")
-    .custom((val) => {
-      if (!Array.isArray(val))
-        throw new Error("Categorynames have to be an array!");
-
-      if (!val.length) throw new Error("Categorynames Array is empty!");
-
-      const isEveryElString = val.every((el) => typeof el === "string");
-
-      if (!isEveryElString) {
-        throw new Error(
-          "Categorynames array should only icnlude strings in it!"
-        );
-      }
-
-      return true;
-    }),
+    .withMessage(
+      "You must provide us an array of category names or name, wich u want to update!"
+    ),
   body("income").isObject(),
   validateData,
   addIncomes
@@ -76,9 +82,9 @@ router.put(
   "/add-outcomes",
   body("categoryNames")
     .isArray()
-    .isLength({ min: 1 })
-    .withMessage("Categorynames array is empty!")
-    .custom(arrayOfStringsValidation),
+    .withMessage(
+      "You must provide us an array of category names or name, wich u want to update!"
+    ),
   body("outcome").isObject(),
   validateData,
   addOutcomes

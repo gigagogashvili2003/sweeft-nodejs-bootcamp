@@ -82,6 +82,46 @@ categorySchema.static(
       );
 
       if (!user) throw new Error("User not found!");
+
+      return newCategory;
+    } catch (err: any) {
+      throw new Error(err);
+    }
+  }
+);
+
+categorySchema.static(
+  "deleteCategory",
+  async function (categoryName: string, userId: Types.ObjectId) {
+    try {
+      const category = await this.findOneAndDelete({
+        userId,
+        name: categoryName,
+      });
+
+      const user = await User.findOne({ _id: userId });
+      const defaultCategory = await this.findOne({ userId, name: "default" });
+      if (!user) throw new Error("User not found!");
+
+      if (!category) throw new Error("Category with given name not found!");
+
+      user.categories = user.categories.filter(
+        (item) => item.toString() !== category._id.toString()
+      );
+
+      if (defaultCategory) {
+        defaultCategory.incomes = defaultCategory.incomes.concat(
+          category.incomes
+        );
+        defaultCategory.outcomes = defaultCategory.outcomes.concat(
+          category.outcomes
+        );
+      } else {
+        throw new Error("Some unexcpected error occur!");
+      }
+
+      await user.save();
+      await defaultCategory?.save();
     } catch (err: any) {
       throw new Error(err);
     }
@@ -111,6 +151,14 @@ categorySchema.static(
   "addIncomes",
   async function addIncomes(categoryNames: string[], income: IIncome) {
     try {
+      let customMessage: string = "";
+
+      if (!categoryNames?.length) {
+        categoryNames = ["default"];
+        customMessage =
+          "Cause you didn't provide us the name of the category, we inserted income in default category!";
+      }
+
       const updatedCategories: IUpdateManyResponse = await this.updateMany(
         { name: { $in: categoryNames } },
         { $push: { incomes: income } }
@@ -118,6 +166,8 @@ categorySchema.static(
 
       if (!updatedCategories.modifiedCount)
         throw new Error("There isn't any category with given names!");
+
+      return customMessage || "Outcome added succesfully!";
     } catch (err: any) {
       throw new Error(err);
     }
@@ -132,15 +182,23 @@ categorySchema.static(
     userId: Types.ObjectId
   ) {
     try {
+      let customMessage: string = "";
+
+      if (!categoryNames?.length) {
+        categoryNames = ["default"];
+        customMessage =
+          "Cause you didn't provide us the name of the category, we inserted outcome in default category!";
+      }
+
       const updatedCategories: IUpdateManyResponse = await this.updateMany(
         { userId, name: { $in: categoryNames } },
         { $push: { outcomes: outcome } }
       );
 
-      console.log(updatedCategories);
-
       if (!updatedCategories.modifiedCount)
         throw new Error("There isn't any category with given names!");
+
+      return customMessage || "Outcome added succesfully!";
     } catch (err: any) {
       throw new Error(err);
     }

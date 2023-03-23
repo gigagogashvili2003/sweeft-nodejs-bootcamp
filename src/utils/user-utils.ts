@@ -30,5 +30,5 @@ export const userWithoutSensitiveData = (user: IUser) => {
 };
 
 export const sendLinkWithToken = (token: string) => {
-  return `<a href="http://localhost:3000//api/auth/reset-password/${token}">Click link to reset password!</a>`;
+  return `<a href="http://localhost:3000/api/auth/reset-password/${token}">Click link to reset password!</a>`;
 };

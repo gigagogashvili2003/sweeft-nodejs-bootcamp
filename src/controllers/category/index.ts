@@ -26,6 +26,22 @@ export const createCategory = async (req: IRequest, res: Response) => {
   }
 };
 
+export const deleteCategory = async (req: IRequest, res: Response) => {
+  try {
+    const { categoryName } = req.body;
+    const user = req.user;
+
+    if (!user)
+      return res.status(401).json({ errorMessage: "User not authenticated!" });
+
+    await Category.deleteCategory(categoryName, user._id);
+
+    res.status(200).json({ message: `Category deleted succesfully!` });
+  } catch (err: any) {
+    res.status(400).json({ errorMessage: err.message });
+  }
+};
+
 export const renameCategory = async (req: IRequest, res: Response) => {
   try {
     const { categoryId } = req.params;
@@ -50,9 +66,13 @@ export const addIncomes = async (req: IRequest, res: Response) => {
     if (!user)
       return res.status(401).json({ errorMessage: "User not authenticated!" });
 
-    await Category.addIncomes(categoryNames, transformedIncome, user._id);
+    const customMessage = await Category.addIncomes(
+      categoryNames,
+      transformedIncome,
+      user._id
+    );
 
-    res.status(200).json({ message: "Income added succesfully!" });
+    res.status(200).json({ message: customMessage });
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }
@@ -69,9 +89,13 @@ export const addOutcomes = async (req: IRequest, res: Response) => {
     if (!user)
       return res.status(401).json({ errorMessage: "User not authenticated!" });
 
-    await Category.addOutcomes(categoryNames, transformedOutcome, user._id);
+    const customMessage = await Category.addOutcomes(
+      categoryNames,
+      transformedOutcome,
+      user._id
+    );
 
-    res.status(200).json({ message: "Outcome added succesfully!" });
+    res.status(200).json({ message: customMessage });
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }

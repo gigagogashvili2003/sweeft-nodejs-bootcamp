@@ -58,6 +58,7 @@ export interface ICategoriesQueryParams extends TimeStamps, ISort {
 }
 export interface ICategoryModel extends Model<ICategory> {
   createCategory(categoryName: string, userId: Types.ObjectId): Promise<void>;
+  deleteCategory(categoryName: string, userId: Types.ObjectId): Promise<void>;
   renameCategory(categoryId: string, categoryName: string): Promise<void>;
   addIncomes(
     categoryNames: string[],
