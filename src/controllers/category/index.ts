@@ -4,6 +4,7 @@ import Category from "@/models/category/index";
 import {
   ICategoriesQueryParams,
   IIncome,
+  IIncomesQueryParams,
   IOutcome,
   IOutcomesQueryParams,
 } from "@/models/category/types";
@@ -137,6 +138,23 @@ export const getOutcomes = async (req: IRequest, res: Response) => {
     res
       .status(200)
       .json({ message: "Filtered succesfully", outcomes: filteredOutcomes });
+  } catch (err: any) {
+    res.status(400).json({ errorMessage: err.message });
+  }
+};
+
+export const getIncomes = async (req: IRequest, res: Response) => {
+  try {
+    const queryParams: IIncomesQueryParams = req.query;
+    const user = req.user;
+
+    if (!user)
+      return res.status(401).json({ errorMessage: "User not authenticated!" });
+
+    const filteredIncomes = await Category.getIncomes(queryParams, user._id);
+    res
+      .status(200)
+      .json({ message: "Filtered succesfully", incomes: filteredIncomes });
   } catch (err: any) {
     res.status(400).json({ errorMessage: err.message });
   }

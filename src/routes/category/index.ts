@@ -6,6 +6,7 @@ import {
   getOutcomes,
   getCategories,
   deleteCategory,
+  getIncomes,
 } from "@/controllers/category";
 import { validateData } from "@/middleware/validatons";
 import { verifyJwt } from "@/middleware/verifyJwt";
@@ -90,6 +91,7 @@ router.put(
 );
 
 router.get("/get-outcomes", getOutcomes);
+router.get("/get-incomes", getIncomes);
 router.get("/get-categories", getCategories);
 
 export default router;

@@ -1,9 +1,10 @@
-import {  model, Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 import {
   ICategoriesQueryParams,
   ICategory,
   ICategoryModel,
   IIncome,
+  IIncomesQueryParams,
   IOutcome,
   IOutcomesQueryParams,
   IUpdateManyResponse,
@@ -31,6 +32,10 @@ const categorySchema = new Schema<ICategory, ICategoryModel>(
 
         total: {
           type: Number,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
           required: true,
         },
       },
@@ -300,6 +305,49 @@ categorySchema.static(
         .select("outcomes");
 
       return filteredOutcomes;
+    } catch (err: any) {
+      throw new Error(err);
+    }
+  }
+);
+
+categorySchema.static(
+  "getIncomes",
+  async function getIncomes(
+    params: IIncomesQueryParams,
+    userId: Types.ObjectId
+  ) {
+    try {
+      const { startDate, endDate, total, sortProperty, sortDirection } = params;
+      const filterOptions: Record<string, any> = {};
+      let sortOptions: Record<string, any> = {};
+
+      if (sortProperty && sortDirection) {
+        sortOptions[`incomes.${sortProperty}`] = sortDirection;
+      }
+
+      if (total) filterOptions["incomes.total"] = total;
+
+      if (startDate) {
+        filterOptions["incomes.createdAt"] = {
+          $gte: new Date(startDate),
+        };
+      }
+
+      if (endDate) {
+        filterOptions["incomes.createdAt"] = {
+          $lte: new Date(endDate),
+        };
+      }
+
+      const filteredIncomes: any = await this.find({
+        userId,
+        ...filterOptions,
+      })
+        .sort(sortOptions)
+        .select("incomes");
+
+      return filteredIncomes;
     } catch (err: any) {
       throw new Error(err);
     }

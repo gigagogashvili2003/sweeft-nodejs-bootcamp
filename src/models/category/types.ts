@@ -53,6 +53,10 @@ export interface IOutcomesQueryParams extends TimeStamps, ISort {
   total?: number;
 }
 
+export interface IIncomesQueryParams extends TimeStamps, ISort {
+  total?: number;
+}
+
 export interface ICategoriesQueryParams extends TimeStamps, ISort {
   categoryName?: string;
 }
@@ -76,6 +80,10 @@ export interface ICategoryModel extends Model<ICategory> {
   ): Promise<void>;
   getOutcomes(
     queryParams: IOutcomesQueryParams,
+    userId: Types.ObjectId
+  ): Promise<ICategory>;
+  getIncomes(
+    queryParams: IIncomesQueryParams,
     userId: Types.ObjectId
   ): Promise<ICategory>;
   getCategories(
