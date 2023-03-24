@@ -34,11 +34,11 @@ app.use("/api/auth", UserRoutes);
 app.use("/api/category", CategoryRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
-  res.send("Express + TypeScript Server");
+  res.send("Sweeft nodejs");
 });
 
 mongoose.connect(DB_URL).then(() => {
   app.listen(port, () => {
-    console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+    console.log("Application Started");
   });
 });

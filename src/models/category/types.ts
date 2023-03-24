@@ -1,17 +1,7 @@
 import { Model, Types } from "mongoose";
 
 export type IOutcomeStatus = "Processing" | "Completed" | "Rejected";
-export type SortDirection =
-  | "ASC"
-  | "asc"
-  | "ascending"
-  | "ASCENDING"
-  | "DESC"
-  | "DESCENDING"
-  | "descending"
-  | "desc"
-  | 1
-  | -1;
+export type SortDirection = 1 | -1;
 export interface IIncome {
   description: string;
   total: number;

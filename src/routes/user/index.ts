@@ -5,7 +5,6 @@ import {
   signup,
 } from "@/controllers/user";
 import { validateData } from "@/middleware/validatons";
-import { verifyJwt } from "@/middleware/verifyJwt";
 import { Router } from "express";
 import { body, param } from "express-validator";
 
