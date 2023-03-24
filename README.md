@@ -1,3 +1,3 @@
 # Categories Dashboard
 
-Used Technologies: Express, Typescript, express-validator, mongoose, jsonwebtoke, nodmeailer
+Used Technologies: Express, Typescript, express-validator, mongoose, jsonwebtoken, nodmeailer
