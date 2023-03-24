@@ -182,7 +182,7 @@ categorySchema.static(
       if (!updatedCategories.modifiedCount)
         throw new Error("There isn't any category with given names!");
 
-      return customMessage || "Outcome added succesfully!";
+      return customMessage || "Income added succesfully!";
     } catch (err: any) {
       throw new Error(err);
     }
@@ -270,20 +270,30 @@ categorySchema.static(
     userId: Types.ObjectId
   ) {
     try {
-      const { startDate, endDate, status, total, sortProperty, sortDirection } =
-        params;
+      const {
+        startDate,
+        endDate,
+        status,
+        totalFrom,
+        totalTo,
+        sortProperty,
+        sortDirection,
+      } = params;
       const filterOptions: Record<string, any> = {};
       let sortOptions: Record<string, any> = {};
 
       if (sortProperty && sortDirection) {
-        sortOptions[`outcomes.${sortProperty}`] = sortDirection;
+        sortOptions[`outcomes.${sortProperty}`] = Number(sortDirection);
       }
 
       if (status) {
         filterOptions["outcomes.status"] = status;
       }
 
-      if (total) filterOptions["outcomes.total"] = total;
+      if (totalFrom)
+        filterOptions["outcomes.total"] = { $gte: Number(totalFrom) };
+
+      if (totalTo) filterOptions["outcomes.total"] = { $lte: Number(totalTo) };
 
       if (startDate) {
         filterOptions["outcomes.createdAt"] = {
@@ -297,12 +307,18 @@ categorySchema.static(
         };
       }
 
-      const filteredOutcomes: any = await this.find({
-        userId,
-        ...filterOptions,
-      })
-        .sort(sortOptions)
-        .select("outcomes");
+      const filteredOutcomes: any = await this.aggregate([
+        { $match: { userId: userId } },
+        { $unwind: "$outcomes" },
+        { $match: filterOptions },
+        {
+          $sort: Object.keys(sortOptions).length
+            ? sortOptions
+            : { "outcomes.total": -1 },
+        },
+        { $group: { _id: "$_id", filteredOutcomes: { $push: "$outcomes" } } },
+        { $project: { _id: 1, filteredOutcomes: 1 } },
+      ]);
 
       return filteredOutcomes;
     } catch (err: any) {
@@ -318,15 +334,26 @@ categorySchema.static(
     userId: Types.ObjectId
   ) {
     try {
-      const { startDate, endDate, total, sortProperty, sortDirection } = params;
+      const {
+        startDate,
+        endDate,
+
+        sortProperty,
+        sortDirection,
+        totalFrom,
+        totalTo,
+      } = params;
       const filterOptions: Record<string, any> = {};
       let sortOptions: Record<string, any> = {};
 
       if (sortProperty && sortDirection) {
-        sortOptions[`incomes.${sortProperty}`] = sortDirection;
+        sortOptions[`incomes.${sortProperty}`] = Number(sortDirection);
       }
 
-      if (total) filterOptions["incomes.total"] = total;
+      if (totalFrom)
+        filterOptions["incomes.total"] = { $gte: Number(totalFrom) };
+
+      if (totalTo) filterOptions["incomes.total"] = { $lte: Number(totalTo) };
 
       if (startDate) {
         filterOptions["incomes.createdAt"] = {
@@ -340,12 +367,18 @@ categorySchema.static(
         };
       }
 
-      const filteredIncomes: any = await this.find({
-        userId,
-        ...filterOptions,
-      })
-        .sort(sortOptions)
-        .select("incomes");
+      const filteredIncomes: any = await this.aggregate([
+        { $match: { userId: userId } },
+        { $unwind: "$incomes" },
+        { $match: filterOptions },
+        {
+          $sort: Object.keys(sortOptions).length
+            ? sortOptions
+            : { "incomes.total": 1 },
+        },
+        { $group: { _id: "$_id", filteredIncomes: { $push: "$incomes" } } },
+        { $project: { _id: 1, filteredIncomes: 1 } },
+      ]);
 
       return filteredIncomes;
     } catch (err: any) {

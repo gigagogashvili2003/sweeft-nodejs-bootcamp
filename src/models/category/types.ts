@@ -50,11 +50,13 @@ interface ISort {
 
 export interface IOutcomesQueryParams extends TimeStamps, ISort {
   status?: IOutcomeStatus;
-  total?: number;
+  totalFrom?: number;
+  totalTo?: number;
 }
 
 export interface IIncomesQueryParams extends TimeStamps, ISort {
-  total?: number;
+  totalFrom?: number;
+  totalTo?: number;
 }
 
 export interface ICategoriesQueryParams extends TimeStamps, ISort {
